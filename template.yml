@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: 'Example of Linear Deployment of a State Machine'
+
+Resources:
+  SAMLogs:
+    Type: AWS::Logs::LogGroup
+
+  TestAliasStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Name: 'TestAliasStateMachine'
+      Type: EXPRESS
+      AutoPublishAlias: 'prod'
+      DefinitionUri: statemachine/statemachine.asl.json
+      Logging:
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt SAMLogs.Arn
+        IncludeExecutionData: True
+        Level: ALL
+      DeploymentPreference:
+        Alarms:
+          - !Ref AliasStateMachineFailureAlarm
+        Interval: 2
+        Percentage: 50
+        Type: LINEAR
+      Policies:
+        - CloudWatchLogsFullAccess
+
+  AliasStateMachineFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Invocation alarm for TestAliasStateMachine
+      Namespace: AWS/States
+      MetricName: ExecutionsFailed
+      Dimensions:
+        - Name: StateMachineArn
+          Value: !Ref TestAliasStateMachine
+        - Name: Alias
+          Value: 'prod'
+      Statistic: Sum
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: 1
+      EvaluationPeriods: 1
+      Period: 300
+      TreatMissingData: notBreaching

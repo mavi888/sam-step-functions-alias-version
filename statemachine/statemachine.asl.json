@@ -1,0 +1,32 @@
+{
+	"StartAt": "Let it fail",
+	"States": {
+		"Let it fail": {
+			"Type": "Choice",
+			"Choices": [
+				{
+					"Variable": "$.input",
+					"StringEquals": "YEY",
+					"Next": "Passed"
+				},
+				{
+					"Variable": "$.input",
+					"StringEquals": "FOOBAR",
+					"Next": "Passed"
+				},
+				{
+					"Variable": "$.input",
+					"StringEquals": "NEI",
+					"Next": "Failed"
+				}
+			]
+		},
+		"Passed": {
+			"Type": "Succeed"
+		},
+		"Failed": {
+			"Type": "Fail"
+		}
+	},
+	"TimeoutSeconds": 30
+}
